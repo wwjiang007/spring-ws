@@ -16,25 +16,26 @@
 
 package org.springframework.ws.transport.http;
 
+import static org.assertj.core.api.Assertions.*;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.util.FileCopyUtils;
+import org.springframework.xml.DocumentBuilderFactoryUtils;
 import org.springframework.xml.xsd.SimpleXsdSchema;
-
-import org.junit.Before;
-import org.junit.Test;
 import org.w3c.dom.Document;
-
-import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
-import static org.junit.Assert.assertEquals;
+import org.xmlunit.assertj.XmlAssert;
 
 public class XsdSchemaHandlerAdapterTest {
 
@@ -44,8 +45,9 @@ public class XsdSchemaHandlerAdapterTest {
 
 	private MockHttpServletResponse response;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
+
 		adapter = new XsdSchemaHandlerAdapter();
 		adapter.afterPropertiesSet();
 		request = new MockHttpServletRequest();
@@ -54,33 +56,40 @@ public class XsdSchemaHandlerAdapterTest {
 
 	@Test
 	public void getLastModified() throws Exception {
+
 		Resource single = new ClassPathResource("single.xsd", getClass());
 		SimpleXsdSchema schema = new SimpleXsdSchema(single);
 		schema.afterPropertiesSet();
 		long lastModified = single.getFile().lastModified();
-		assertEquals("Invalid last modified", lastModified, adapter.getLastModified(null, schema));
+
+		assertThat(adapter.getLastModified(null, schema)).isEqualTo(lastModified);
 	}
 
 	@Test
 	public void handleGet() throws Exception {
+
 		request.setMethod(HttpTransportConstants.METHOD_GET);
 		Resource single = new ClassPathResource("single.xsd", getClass());
 		SimpleXsdSchema schema = new SimpleXsdSchema(single);
 		schema.afterPropertiesSet();
 		adapter.handle(request, response, schema);
 		String expected = new String(FileCopyUtils.copyToByteArray(single.getFile()));
-		assertXMLEqual(expected, response.getContentAsString());
+
+		XmlAssert.assertThat(response.getContentAsString()).and(expected).ignoreWhitespace().areIdentical();
 	}
 
 	@Test
 	public void handleNonGet() throws Exception {
+
 		request.setMethod(HttpTransportConstants.METHOD_POST);
 		adapter.handle(request, response, null);
-		assertEquals("METHOD_NOT_ALLOWED expected", HttpServletResponse.SC_METHOD_NOT_ALLOWED, response.getStatus());
+
+		assertThat(response.getStatus()).isEqualTo(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
 	}
 
 	@Test
 	public void handleGetWithTransformLocation() throws Exception {
+
 		adapter.setTransformSchemaLocations(true);
 
 		request.setMethod(HttpTransportConstants.METHOD_GET);
@@ -99,14 +108,14 @@ public class XsdSchemaHandlerAdapterTest {
 		adapter.handle(request, response, schema);
 
 		InputStream inputStream = new ByteArrayInputStream(response.getContentAsByteArray());
-		DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+		DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactoryUtils.newInstance();
 		documentBuilderFactory.setNamespaceAware(true);
 		DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
 		Document resultingDocument = documentBuilder.parse(inputStream);
 
 		documentBuilder = documentBuilderFactory.newDocumentBuilder();
 		Document expectedDocument = documentBuilder.parse(getClass().getResourceAsStream("importing-expected.xsd"));
-		assertXMLEqual("Invalid WSDL returned", expectedDocument, resultingDocument);
-	}
 
+		XmlAssert.assertThat(resultingDocument).and(expectedDocument).ignoreWhitespace().areIdentical();
+	}
 }

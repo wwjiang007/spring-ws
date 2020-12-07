@@ -18,6 +18,7 @@ package org.springframework.ws.server.endpoint.adapter.method;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
@@ -30,11 +31,12 @@ import org.springframework.core.MethodParameter;
 import org.springframework.util.xml.StaxUtils;
 import org.springframework.ws.context.MessageContext;
 import org.springframework.ws.server.endpoint.annotation.RequestPayload;
+import org.springframework.xml.XMLInputFactoryUtils;
 import org.springframework.xml.transform.TransformerObjectSupport;
 
 /**
- * Implementation of {@link MethodArgumentResolver} that supports StAX {@link XMLStreamReader} and {@link
- * XMLEventReader} arguments.
+ * Implementation of {@link MethodArgumentResolver} that supports StAX {@link XMLStreamReader} and
+ * {@link XMLEventReader} arguments.
  *
  * @author Arjen Poutsma
  * @since 2.0
@@ -47,8 +49,7 @@ public class StaxPayloadMethodArgumentResolver extends TransformerObjectSupport 
 	public boolean supportsParameter(MethodParameter parameter) {
 		if (parameter.getParameterAnnotation(RequestPayload.class) == null) {
 			return false;
-		}
-		else {
+		} else {
 			Class<?> parameterType = parameter.getParameterType();
 			return XMLStreamReader.class.equals(parameterType) || XMLEventReader.class.equals(parameterType);
 		}
@@ -64,8 +65,7 @@ public class StaxPayloadMethodArgumentResolver extends TransformerObjectSupport 
 		Class<?> parameterType = parameter.getParameterType();
 		if (XMLStreamReader.class.equals(parameterType)) {
 			return resolveStreamReader(source);
-		}
-		else if (XMLEventReader.class.equals(parameterType)) {
+		} else if (XMLEventReader.class.equals(parameterType)) {
 			return resolveEventReader(source);
 		}
 		throw new UnsupportedOperationException();
@@ -80,8 +80,7 @@ public class StaxPayloadMethodArgumentResolver extends TransformerObjectSupport 
 				if (eventReader != null) {
 					try {
 						streamReader = StaxUtils.createEventStreamReader(eventReader);
-					}
-					catch (XMLStreamException ex) {
+					} catch (XMLStreamException ex) {
 						streamReader = null;
 					}
 				}
@@ -90,11 +89,9 @@ public class StaxPayloadMethodArgumentResolver extends TransformerObjectSupport 
 		if (streamReader == null) {
 			try {
 				streamReader = inputFactory.createXMLStreamReader(requestSource);
-			}
-			catch (XMLStreamException ex) {
+			} catch (XMLStreamException ex) {
 				streamReader = null;
-			}
-			catch (UnsupportedOperationException ex) {
+			} catch (UnsupportedOperationException ex) {
 				streamReader = null;
 			}
 		}
@@ -115,8 +112,7 @@ public class StaxPayloadMethodArgumentResolver extends TransformerObjectSupport 
 				if (streamReader != null) {
 					try {
 						eventReader = inputFactory.createXMLEventReader(streamReader);
-					}
-					catch (XMLStreamException ex) {
+					} catch (XMLStreamException ex) {
 						eventReader = null;
 					}
 				}
@@ -126,11 +122,9 @@ public class StaxPayloadMethodArgumentResolver extends TransformerObjectSupport 
 		if (eventReader == null) {
 			try {
 				eventReader = inputFactory.createXMLEventReader(requestSource);
-			}
-			catch (XMLStreamException ex) {
+			} catch (XMLStreamException ex) {
 				eventReader = null;
-			}
-			catch (UnsupportedOperationException ex) {
+			} catch (UnsupportedOperationException ex) {
 				eventReader = null;
 			}
 		}
@@ -143,16 +137,16 @@ public class StaxPayloadMethodArgumentResolver extends TransformerObjectSupport 
 	}
 
 	/**
-	 * Create a {@code XMLInputFactory} that this resolver will use to create {@link XMLStreamReader} and {@link
-	 * XMLEventReader} objects.
-	 *
-	 * <p>Can be overridden in subclasses, adding further initialization of the factory. The resulting factory is cached,
-	 * so this method will only be called once.
+	 * Create a {@code XMLInputFactory} that this resolver will use to create {@link XMLStreamReader} and
+	 * {@link XMLEventReader} objects.
+	 * <p>
+	 * Can be overridden in subclasses, adding further initialization of the factory. The resulting factory is cached, so
+	 * this method will only be called once.
 	 *
 	 * @return the created factory
 	 */
 	protected XMLInputFactory createXmlInputFactory() {
-		return XMLInputFactory.newInstance();
+		return XMLInputFactoryUtils.newInstance();
 	}
 
 	private ByteArrayInputStream convertToByteArrayInputStream(Source source) throws TransformerException {
@@ -160,7 +154,5 @@ public class StaxPayloadMethodArgumentResolver extends TransformerObjectSupport 
 		transform(source, new StreamResult(bos));
 		return new ByteArrayInputStream(bos.toByteArray());
 	}
-
-
 
 }

@@ -17,6 +17,7 @@
 package org.springframework.xml.xsd;
 
 import java.io.IOException;
+
 import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -24,30 +25,31 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Source;
 import javax.xml.transform.dom.DOMSource;
 
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.core.io.Resource;
+import org.springframework.util.Assert;
+import org.springframework.xml.DocumentBuilderFactoryUtils;
+import org.springframework.xml.sax.SaxUtils;
+import org.springframework.xml.validation.XmlValidator;
+import org.springframework.xml.validation.XmlValidatorFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.core.io.Resource;
-import org.springframework.util.Assert;
-import org.springframework.xml.sax.SaxUtils;
-import org.springframework.xml.validation.XmlValidator;
-import org.springframework.xml.validation.XmlValidatorFactory;
-
 /**
  * The default {@link XsdSchema} implementation.
- *
- * <p>Allows a XSD to be set by the {@link #setXsd(Resource)}, or directly in the {@link #SimpleXsdSchema(Resource)
+ * <p>
+ * Allows a XSD to be set by the {@link #setXsd(Resource)}, or directly in the {@link #SimpleXsdSchema(Resource)
  * constructor}.
  *
  * @author Mark LaFond
  * @author Arjen Poutsma
+ * @author Greg Turnquist
  * @since 1.5.0
  */
 public class SimpleXsdSchema implements XsdSchema, InitializingBean {
 
-	private static DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+	private static DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactoryUtils.newInstance();
 
 	private static final String SCHEMA_NAMESPACE = "http://www.w3.org/2001/XMLSchema";
 
@@ -63,14 +65,13 @@ public class SimpleXsdSchema implements XsdSchema, InitializingBean {
 
 	/**
 	 * Create a new instance of the {@link SimpleXsdSchema} class.
-	 *
-	 * <p>A subsequent call to the {@link #setXsd(Resource)} method is required.
+	 * <p>
+	 * A subsequent call to the {@link #setXsd(Resource)} method is required.
 	 */
-	public SimpleXsdSchema() {
-	}
+	public SimpleXsdSchema() {}
 
 	/**
-	 * Create a new instance of the	 {@link SimpleXsdSchema} class with the specified resource.
+	 * Create a new instance of the {@link SimpleXsdSchema} class with the specified resource.
 	 *
 	 * @param xsdResource the XSD resource; must not be {@code null}
 	 * @throws IllegalArgumentException if the supplied {@code xsdResource} is {@code null}
@@ -91,6 +92,10 @@ public class SimpleXsdSchema implements XsdSchema, InitializingBean {
 
 	@Override
 	public String getTargetNamespace() {
+
+		Assert.notNull(schemaElement,
+				"schemaElement must not be null! Did you run afterPropertiesSet() or register this as a Spring bean?");
+
 		return schemaElement.getAttribute("targetNamespace");
 	}
 
@@ -103,8 +108,7 @@ public class SimpleXsdSchema implements XsdSchema, InitializingBean {
 	public XmlValidator createValidator() {
 		try {
 			return XmlValidatorFactory.createValidator(xsdResource, XmlValidatorFactory.SCHEMA_W3C_XML);
-		}
-		catch (IOException ex) {
+		} catch (IOException ex) {
 			throw new XsdSchemaException(ex.getMessage(), ex);
 		}
 	}
@@ -122,9 +126,9 @@ public class SimpleXsdSchema implements XsdSchema, InitializingBean {
 		schemaElement = schemaDocument.getDocumentElement();
 		Assert.isTrue(SCHEMA_NAME.getLocalPart().equals(schemaElement.getLocalName()),
 				xsdResource + " has invalid root element : [" + schemaElement.getLocalName() + "] instead of [schema]");
-		Assert.isTrue(SCHEMA_NAME.getNamespaceURI().equals(schemaElement.getNamespaceURI()), xsdResource +
-				" has invalid root element: [" + schemaElement.getNamespaceURI() + "] instead of [" +
-				SCHEMA_NAME.getNamespaceURI() + "]");
+		Assert.isTrue(SCHEMA_NAME.getNamespaceURI().equals(schemaElement.getNamespaceURI()),
+				xsdResource + " has invalid root element: [" + schemaElement.getNamespaceURI() + "] instead of ["
+						+ SCHEMA_NAME.getNamespaceURI() + "]");
 		Assert.hasText(getTargetNamespace(), xsdResource + " has no targetNamespace");
 	}
 

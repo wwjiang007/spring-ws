@@ -17,6 +17,7 @@
 package org.springframework.xml.validation;
 
 import java.io.IOException;
+
 import javax.xml.transform.Source;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
@@ -24,10 +25,8 @@ import javax.xml.validation.SchemaFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.util.Assert;
 import org.springframework.xml.transform.ResourceSource;
-
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
-import org.xml.sax.helpers.XMLReaderFactory;
 
 /**
  * Convenient utility methods for loading of {@link Schema} objects, performing standard handling of input streams.
@@ -40,25 +39,25 @@ public abstract class SchemaLoaderUtils {
 	/**
 	 * Load schema from the given resource.
 	 *
-	 * @param resource		 the resource to load from
+	 * @param resource the resource to load from
 	 * @param schemaLanguage the language of the schema. Can be {@code XMLConstants.W3C_XML_SCHEMA_NS_URI} or
-	 *						 {@code XMLConstants.RELAXNG_NS_URI}.
-	 * @throws IOException	if loading failed
+	 *          {@code XMLConstants.RELAXNG_NS_URI}.
+	 * @throws IOException if loading failed
 	 * @throws SAXException if loading failed
 	 * @see javax.xml.XMLConstants#W3C_XML_SCHEMA_NS_URI
 	 * @see javax.xml.XMLConstants#RELAXNG_NS_URI
 	 */
 	public static Schema loadSchema(Resource resource, String schemaLanguage) throws IOException, SAXException {
-		return loadSchema(new Resource[]{resource}, schemaLanguage);
+		return loadSchema(new Resource[] { resource }, schemaLanguage);
 	}
 
 	/**
 	 * Load schema from the given resource.
 	 *
-	 * @param resources		 the resources to load from
+	 * @param resources the resources to load from
 	 * @param schemaLanguage the language of the schema. Can be {@code XMLConstants.W3C_XML_SCHEMA_NS_URI} or
-	 *						 {@code XMLConstants.RELAXNG_NS_URI}.
-	 * @throws IOException	if loading failed
+	 *          {@code XMLConstants.RELAXNG_NS_URI}.
+	 * @throws IOException if loading failed
 	 * @throws SAXException if loading failed
 	 * @see javax.xml.XMLConstants#W3C_XML_SCHEMA_NS_URI
 	 * @see javax.xml.XMLConstants#RELAXNG_NS_URI
@@ -67,14 +66,14 @@ public abstract class SchemaLoaderUtils {
 		Assert.notEmpty(resources, "No resources given");
 		Assert.hasLength(schemaLanguage, "No schema language provided");
 		Source[] schemaSources = new Source[resources.length];
-		XMLReader xmlReader = XMLReaderFactory.createXMLReader();
+		XMLReader xmlReader = XMLReaderFactoryUtils.createXMLReader();
 		xmlReader.setFeature("http://xml.org/sax/features/namespace-prefixes", true);
 		for (int i = 0; i < resources.length; i++) {
 			Assert.notNull(resources[i], "Resource is null");
 			Assert.isTrue(resources[i].exists(), "Resource " + resources[i] + " does not exist");
 			schemaSources[i] = new ResourceSource(xmlReader, resources[i]);
 		}
-		SchemaFactory schemaFactory = SchemaFactory.newInstance(schemaLanguage);
+		SchemaFactory schemaFactory = SchemaFactoryUtils.newInstance(schemaLanguage);
 		return schemaFactory.newSchema(schemaSources);
 	}
 
@@ -82,9 +81,9 @@ public abstract class SchemaLoaderUtils {
 	public static String getSystemId(Resource resource) {
 		try {
 			return resource.getURL().toString();
-		}
-		catch (IOException e) {
+		} catch (IOException e) {
 			return null;
 		}
 	}
+
 }

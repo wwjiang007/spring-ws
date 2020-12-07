@@ -19,6 +19,7 @@ package org.springframework.ws.server.endpoint.mapping;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.xml.namespace.QName;
 import javax.xml.transform.TransformerFactory;
 
@@ -29,12 +30,14 @@ import org.springframework.ws.server.EndpointMapping;
 import org.springframework.ws.server.endpoint.annotation.PayloadRoot;
 import org.springframework.ws.server.endpoint.annotation.PayloadRoots;
 import org.springframework.ws.server.endpoint.support.PayloadRootUtils;
+import org.springframework.xml.transform.TransformerFactoryUtils;
 
 /**
  * Implementation of the {@link EndpointMapping} interface that uses the {@link PayloadRoot} annotation to map methods
  * to request payload root elements.
- *
- * <p>Endpoints typically have the following form:
+ * <p>
+ * Endpoints typically have the following form:
+ * 
  * <pre>
  * &#64;Endpoint
  * public class MyEndpoint{
@@ -54,7 +57,16 @@ public class PayloadRootAnnotationMethodEndpointMapping extends AbstractAnnotati
 	private static TransformerFactory transformerFactory;
 
 	static {
-		transformerFactory = TransformerFactory.newInstance();
+		setTransformerFactory(TransformerFactoryUtils.newInstance());
+	}
+
+	/**
+	 * Override the default {@link TransformerFactory}.
+	 * 
+	 * @param transformerFactory
+	 */
+	public static void setTransformerFactory(TransformerFactory transformerFactory) {
+		PayloadRootAnnotationMethodEndpointMapping.transformerFactory = transformerFactory;
 	}
 
 	@Override
@@ -71,8 +83,7 @@ public class PayloadRootAnnotationMethodEndpointMapping extends AbstractAnnotati
 			for (PayloadRoot payloadRoot : payloadRoots.value()) {
 				result.add(getQNameFromAnnotation(payloadRoot));
 			}
-		}
-		else {
+		} else {
 			PayloadRoot payloadRoot = AnnotationUtils.findAnnotation(method, PayloadRoot.class);
 			if (payloadRoot != null) {
 				result.add(getQNameFromAnnotation(payloadRoot));
@@ -83,11 +94,9 @@ public class PayloadRootAnnotationMethodEndpointMapping extends AbstractAnnotati
 	}
 
 	private QName getQNameFromAnnotation(PayloadRoot payloadRoot) {
-		if (StringUtils.hasLength(payloadRoot.localPart()) && StringUtils.hasLength(
-				payloadRoot.namespace())) {
+		if (StringUtils.hasLength(payloadRoot.localPart()) && StringUtils.hasLength(payloadRoot.namespace())) {
 			return new QName(payloadRoot.namespace(), payloadRoot.localPart());
-		}
-		else {
+		} else {
 			return new QName(payloadRoot.localPart());
 		}
 	}

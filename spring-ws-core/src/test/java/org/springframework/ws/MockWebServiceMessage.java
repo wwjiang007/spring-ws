@@ -23,6 +23,8 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+
 import javax.xml.namespace.QName;
 import javax.xml.transform.Result;
 import javax.xml.transform.Source;
@@ -37,6 +39,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.xml.sax.SaxUtils;
 import org.springframework.xml.transform.StringSource;
+import org.springframework.xml.transform.TransformerFactoryUtils;
 
 /**
  * Mock implementation of the {@code WebServiceMessage} interface.
@@ -54,11 +57,11 @@ public class MockWebServiceMessage implements FaultAwareWebServiceMessage {
 
 	private String faultReason;
 
-	public MockWebServiceMessage() {
-	}
+	public MockWebServiceMessage() {}
 
 	public MockWebServiceMessage(Source source) throws TransformerException {
-		TransformerFactory transformerFactory = TransformerFactory.newInstance();
+
+		TransformerFactory transformerFactory = TransformerFactoryUtils.newInstance();
 		Transformer transformer = transformerFactory.newTransformer();
 		content = new StringBuilder();
 		transformer.transform(source, getPayloadResult());
@@ -73,6 +76,7 @@ public class MockWebServiceMessage implements FaultAwareWebServiceMessage {
 	}
 
 	public MockWebServiceMessage(String content) {
+
 		if (content != null) {
 			this.content = new StringBuilder(content);
 		}
@@ -83,26 +87,23 @@ public class MockWebServiceMessage implements FaultAwareWebServiceMessage {
 	}
 
 	public void setPayload(InputStreamSource inputStreamSource) throws IOException {
+
 		checkContent();
-		InputStream is = null;
-		try {
-			is = inputStreamSource.getInputStream();
-			Reader reader = new InputStreamReader(is, "UTF-8");
+
+		try (InputStream is = inputStreamSource.getInputStream()) {
+			Reader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
 			content.replace(0, content.length(), FileCopyUtils.copyToString(reader));
-		}
-		finally {
-			if (is != null) {
-				is.close();
-			}
 		}
 	}
 
 	public void setPayload(String content) {
+
 		checkContent();
 		this.content.replace(0, this.content.length(), content);
 	}
 
 	private void checkContent() {
+
 		if (content == null) {
 			content = new StringBuilder();
 		}
@@ -110,6 +111,7 @@ public class MockWebServiceMessage implements FaultAwareWebServiceMessage {
 
 	@Override
 	public Result getPayloadResult() {
+
 		checkContent();
 		content.setLength(0);
 		return new StreamResult(new StringBufferWriter());
@@ -148,7 +150,8 @@ public class MockWebServiceMessage implements FaultAwareWebServiceMessage {
 	}
 
 	@Override
-	public void writeTo(OutputStream outputStream) throws IOException {
+	public void writeTo(OutputStream outputStream) {
+
 		if (content != null) {
 			PrintWriter writer = new PrintWriter(outputStream);
 			writer.write(content.toString());
@@ -156,10 +159,13 @@ public class MockWebServiceMessage implements FaultAwareWebServiceMessage {
 	}
 
 	public String toString() {
+
 		StringBuilder builder = new StringBuilder("MockWebServiceMessage {");
+
 		if (content != null) {
 			builder.append(content);
 		}
+
 		builder.append('}');
 		return builder.toString();
 	}
@@ -182,25 +188,24 @@ public class MockWebServiceMessage implements FaultAwareWebServiceMessage {
 
 		@Override
 		public void write(String str, int off, int len) {
-			content.append(str.substring(off, off + len));
+			content.append(str, off, off + len);
 		}
 
 		@Override
-		public void close() throws IOException {
-		}
+		public void close() {}
 
 		@Override
-		public void flush() {
-		}
+		public void flush() {}
 
 		@Override
 		public void write(char cbuf[], int off, int len) {
+
 			if (off < 0 || off > cbuf.length || len < 0 || off + len > cbuf.length || off + len < 0) {
 				throw new IndexOutOfBoundsException();
-			}
-			else if (len == 0) {
+			} else if (len == 0) {
 				return;
 			}
+
 			content.append(cbuf, off, len);
 		}
 	}

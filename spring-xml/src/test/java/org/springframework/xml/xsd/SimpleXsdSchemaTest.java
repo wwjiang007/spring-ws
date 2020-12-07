@@ -16,15 +16,25 @@
 
 package org.springframework.xml.xsd;
 
+import static org.assertj.core.api.Assertions.*;
+
+import org.junit.jupiter.api.Test;
 import org.springframework.core.io.Resource;
 
 public class SimpleXsdSchemaTest extends AbstractXsdSchemaTestCase {
 
 	@Override
 	protected XsdSchema createSchema(Resource resource) throws Exception {
+
 		SimpleXsdSchema schema = new SimpleXsdSchema(resource);
 		schema.afterPropertiesSet();
+
 		return schema;
+	}
+
+	@Test
+	public void testBareXsdSchema() {
+		assertThatIllegalArgumentException().isThrownBy(() -> new SimpleXsdSchema().toString());
 	}
 
 }

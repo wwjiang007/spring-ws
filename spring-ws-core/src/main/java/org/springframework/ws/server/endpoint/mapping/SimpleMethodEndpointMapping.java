@@ -17,6 +17,7 @@
 package org.springframework.ws.server.endpoint.mapping;
 
 import java.lang.reflect.Method;
+
 import javax.xml.namespace.QName;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
@@ -26,13 +27,15 @@ import org.springframework.util.Assert;
 import org.springframework.ws.WebServiceMessage;
 import org.springframework.ws.context.MessageContext;
 import org.springframework.ws.server.endpoint.support.PayloadRootUtils;
+import org.springframework.xml.transform.TransformerFactoryUtils;
 
 /**
  * Simple subclass of {@link AbstractMethodEndpointMapping} that maps from the local name of the request payload to
- * methods. Endpoint beans are registered using the {@code endpoints} property; the endpoint methods that start
- * with {@code methodPrefix} and end with {@code methodSuffix} will be registered.
- *
- * <p>Endpoints typically have the following form:
+ * methods. Endpoint beans are registered using the {@code endpoints} property; the endpoint methods that start with
+ * {@code methodPrefix} and end with {@code methodSuffix} will be registered.
+ * <p>
+ * Endpoints typically have the following form:
+ * 
  * <pre>
  * public class MyEndpoint{
  *
@@ -41,6 +44,7 @@ import org.springframework.ws.server.endpoint.support.PayloadRootUtils;
  *	  }
  * }
  * </pre>
+ * 
  * This method will handle any message that has the {@code MyMessage} as a payload root local name.
  *
  * @author Arjen Poutsma
@@ -68,8 +72,8 @@ public class SimpleMethodEndpointMapping extends AbstractMethodEndpointMapping<S
 	}
 
 	/**
-	 * Sets the endpoints. The endpoint methods that start with {@code methodPrefix} and end with
-	 * {@code methodSuffix} will be registered.
+	 * Sets the endpoints. The endpoint methods that start with {@code methodPrefix} and end with {@code methodSuffix}
+	 * will be registered.
 	 */
 	public void setEndpoints(Object[] endpoints) {
 		this.endpoints = endpoints;
@@ -108,7 +112,7 @@ public class SimpleMethodEndpointMapping extends AbstractMethodEndpointMapping<S
 	@Override
 	public final void afterPropertiesSet() throws Exception {
 		Assert.notEmpty(getEndpoints(), "'endpoints' is required");
-		transformerFactory = TransformerFactory.newInstance();
+		transformerFactory = TransformerFactoryUtils.newInstance();
 		for (int i = 0; i < getEndpoints().length; i++) {
 			registerMethods(getEndpoints()[i]);
 		}
@@ -122,16 +126,14 @@ public class SimpleMethodEndpointMapping extends AbstractMethodEndpointMapping<S
 		String suffix = getMethodSuffix();
 		if (methodName.startsWith(prefix) && methodName.endsWith(suffix)) {
 			return methodName.substring(prefix.length(), methodName.length() - suffix.length());
-		}
-		else {
+		} else {
 			return null;
 		}
 	}
 
 	/** Returns the local part of the payload root element of the request. */
 	@Override
-	protected String getLookupKeyForMessage(MessageContext messageContext)
-			throws TransformerException {
+	protected String getLookupKeyForMessage(MessageContext messageContext) throws TransformerException {
 		WebServiceMessage request = messageContext.getRequest();
 		QName rootQName = PayloadRootUtils.getPayloadRootQName(request.getPayloadSource(), transformerFactory);
 		return rootQName.getLocalPart();

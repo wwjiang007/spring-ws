@@ -17,8 +17,9 @@
 package org.springframework.ws.soap.saaj;
 
 import java.util.Iterator;
+
 import javax.xml.namespace.QName;
-import javax.xml.soap.SOAPElement;
+import javax.xml.soap.Node;
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPHeader;
 import javax.xml.soap.SOAPHeaderElement;
@@ -52,15 +53,15 @@ abstract class SaajSoapHeader extends SaajSoapElement<SOAPHeader> implements Soa
 	@Override
 	@SuppressWarnings("unchecked")
 	public Iterator<SoapHeaderElement> examineHeaderElements(QName name) throws SoapHeaderException {
-		Iterator<SOAPHeaderElement> iterator = getSaajHeader().getChildElements(name);
+		Iterator<Node> iterator = getSaajHeader().getChildElements(name);
 		return new SaajSoapHeaderElementIterator(iterator);
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Iterator<SoapHeaderElement> examineMustUnderstandHeaderElements(String actorOrRole) throws SoapHeaderException {
-		Iterator<SOAPHeaderElement> iterator =
-				getSaajHeader().examineMustUnderstandHeaderElements(actorOrRole);
+	public Iterator<SoapHeaderElement> examineMustUnderstandHeaderElements(String actorOrRole)
+			throws SoapHeaderException {
+		Iterator<SOAPHeaderElement> iterator = getSaajHeader().examineMustUnderstandHeaderElements(actorOrRole);
 		return new SaajSoapHeaderElementIterator(iterator);
 	}
 
@@ -69,8 +70,7 @@ abstract class SaajSoapHeader extends SaajSoapElement<SOAPHeader> implements Soa
 		try {
 			SOAPHeaderElement headerElement = getSaajHeader().addHeaderElement(name);
 			return new SaajSoapHeaderElement(headerElement);
-		}
-		catch (SOAPException ex) {
+		} catch (SOAPException ex) {
 			throw new SaajSoapHeaderException(ex);
 		}
 	}
@@ -78,9 +78,9 @@ abstract class SaajSoapHeader extends SaajSoapElement<SOAPHeader> implements Soa
 	@SuppressWarnings("unchecked")
 	@Override
 	public void removeHeaderElement(QName name) throws SoapHeaderException {
-		Iterator<SOAPElement> iterator = getSaajHeader().getChildElements(name);
+		Iterator<Node> iterator = getSaajHeader().getChildElements(name);
 		if (iterator.hasNext()) {
-			SOAPElement element = iterator.next();
+			Node element = iterator.next();
 			element.detachNode();
 		}
 	}
@@ -96,9 +96,9 @@ abstract class SaajSoapHeader extends SaajSoapElement<SOAPHeader> implements Soa
 
 	protected static class SaajSoapHeaderElementIterator implements Iterator<SoapHeaderElement> {
 
-		private final Iterator<SOAPHeaderElement> iterator;
+		private final Iterator<? extends Node> iterator;
 
-		protected SaajSoapHeaderElementIterator(Iterator<SOAPHeaderElement> iterator) {
+		protected SaajSoapHeaderElementIterator(Iterator<? extends Node> iterator) {
 			Assert.notNull(iterator, "iterator must not be null");
 			this.iterator = iterator;
 		}
@@ -110,8 +110,12 @@ abstract class SaajSoapHeader extends SaajSoapElement<SOAPHeader> implements Soa
 
 		@Override
 		public SoapHeaderElement next() {
-			SOAPHeaderElement saajHeaderElement = iterator.next();
-			return new SaajSoapHeaderElement(saajHeaderElement);
+			Node saajHeaderElement = iterator.next();
+			if (saajHeaderElement instanceof SOAPHeaderElement) {
+				return new SaajSoapHeaderElement((SOAPHeaderElement) saajHeaderElement);
+			} else {
+				throw new RuntimeException("saajHeaderElement is not an instance of SOAPHeaderElement");
+			}
 		}
 
 		@Override

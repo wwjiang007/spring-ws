@@ -16,20 +16,22 @@
 
 package org.springframework.ws.pox.dom;
 
+import static org.xmlunit.assertj.XmlAssert.*;
+
 import java.io.ByteArrayOutputStream;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.xml.DocumentBuilderFactoryUtils;
 import org.springframework.xml.transform.StringResult;
 import org.springframework.xml.transform.StringSource;
-
-import org.junit.Before;
-import org.junit.Test;
+import org.springframework.xml.transform.TransformerFactoryUtils;
 import org.w3c.dom.Document;
-
-import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 
 public class DomPoxMessageTest {
 
@@ -37,43 +39,50 @@ public class DomPoxMessageTest {
 
 	private Transformer transformer;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
-		DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+
+		DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactoryUtils.newInstance();
 		DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
 		Document document = documentBuilder.newDocument();
-		TransformerFactory transformerFactory = TransformerFactory.newInstance();
+		TransformerFactory transformerFactory = TransformerFactoryUtils.newInstance();
 		transformer = transformerFactory.newTransformer();
 		message = new DomPoxMessage(document, transformer, DomPoxMessageFactory.DEFAULT_CONTENT_TYPE);
 	}
 
 	@Test
 	public void testGetPayload() throws Exception {
+
 		String content = "<root xmlns='http://www.springframework.org/spring-ws'>" + "<child/></root>";
 		StringSource source = new StringSource(content);
 		transformer.transform(source, message.getPayloadResult());
 		StringResult stringResult = new StringResult();
 		transformer.transform(message.getPayloadSource(), stringResult);
-		assertXMLEqual(content, stringResult.toString());
+
+		assertThat(stringResult.toString()).and(content).ignoreWhitespace().areIdentical();
 	}
 
 	@Test
 	public void testGetPayloadResultTwice() throws Exception {
+
 		String content = "<element xmlns=\"http://www.springframework.org/spring-ws\" />";
 		transformer.transform(new StringSource(content), message.getPayloadResult());
 		transformer.transform(new StringSource(content), message.getPayloadResult());
 		StringResult stringResult = new StringResult();
 		transformer.transform(message.getPayloadSource(), stringResult);
-		assertXMLEqual(content, stringResult.toString());
+
+		assertThat(stringResult.toString()).and(content).ignoreWhitespace().areIdentical();
 	}
 
 	@Test
 	public void testWriteTo() throws Exception {
+
 		String content = "<root xmlns='http://www.springframework.org/spring-ws'>" + "<child/></root>";
 		StringSource source = new StringSource(content);
 		transformer.transform(source, message.getPayloadResult());
 		ByteArrayOutputStream os = new ByteArrayOutputStream();
 		message.writeTo(os);
-		assertXMLEqual(content, os.toString("UTF-8"));
+
+		assertThat(os.toString("UTF-8")).and(content).ignoreWhitespace().areIdentical();
 	}
 }

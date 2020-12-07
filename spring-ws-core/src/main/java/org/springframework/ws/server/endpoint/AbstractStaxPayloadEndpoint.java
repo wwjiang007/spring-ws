@@ -19,11 +19,11 @@ package org.springframework.ws.server.endpoint;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLOutputFactory;
 
+import org.springframework.xml.XMLInputFactoryUtils;
 import org.springframework.xml.transform.TransformerObjectSupport;
 
 /**
- * Abstract base class for endpoints use StAX. Provides an {@code XMLInputFactory} and an
- * {@code XMLOutputFactory}.
+ * Abstract base class for endpoints use StAX. Provides an {@code XMLInputFactory} and an {@code XMLOutputFactory}.
  *
  * @author Arjen Poutsma
  * @see XMLInputFactory
@@ -63,7 +63,7 @@ public abstract class AbstractStaxPayloadEndpoint extends TransformerObjectSuppo
 	 * @return the created {@code XMLInputFactory}
 	 */
 	protected XMLInputFactory createXmlInputFactory() {
-		return XMLInputFactory.newInstance();
+		return XMLInputFactoryUtils.newInstance();
 	}
 
 	/**
